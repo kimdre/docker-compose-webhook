@@ -248,6 +248,33 @@ func DeployCompose(ctx context.Context, dockerCli command.Cli, project *types.Pr
 		WaitTimeout: time.Duration(deployConfig.Timeout) * time.Second,
 	}
 
+	vizOpts := api.VizOptions{
+		IncludeNetworks:  true,
+		IncludePorts:     true,
+		IncludeImageName: true,
+		Indentation:      "  ",
+	}
+	graph, err := service.Viz(ctx, project, vizOpts)
+	if err != nil {
+		return err
+	}
+
+	// Write the graph to a file
+	f, err := os.Create("docker-compose-graph.dot")
+	if err != nil {
+		return err
+	}
+
+	_, err = f.WriteString(graph)
+	if err != nil {
+		return err
+	}
+
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+
 	err = service.Up(ctx, project, api.UpOptions{
 		Create: createOpts,
 		Start:  startOpts,
